@@ -1,0 +1,28 @@
+---
+
+- name: (kopf-redhat) | check kopf plugin
+  shell: /usr/share/elasticsearch/bin/plugin list | grep kopf
+  register: kopf_installed
+  ignore_errors: yes
+
+
+- name: (kopf-redhat) | remove kopf plugin
+  shell: /usr/share/elasticsearch/bin/plugin remove kopf
+  when: kopf_installed.rc == 0
+
+
+- name: (kopf-redhat) | wget kopf plugin file
+  get_url:
+    url: https://github.com/lmenezes/elasticsearch-kopf/archive/v2.1.2.zip
+    dest: /tmp/v2.1.2.zip
+
+
+- name: (kopf-redhat) | install kopf plugin
+  shell: /usr/share/elasticsearch/bin/plugin install file:///tmp/v2.1.2.zip
+
+
+- name: (kopf-redhat) | remove tmp kopf plugin file
+  file:
+    path: /tmp/v2.1.2.zip
+    state: absent
+

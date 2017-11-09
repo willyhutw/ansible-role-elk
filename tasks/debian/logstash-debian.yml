@@ -1,0 +1,74 @@
+---
+
+- name: (logstash-debian) | check logstash
+  shell: dpkg -l | grep logstash
+  register: check_logstash_debian
+  ignore_errors: yes
+
+
+- name: (logstash-debian) | stop logstash service
+  service:
+    name: logstash
+    state: stopped
+  when: check_logstash_debian.rc == 0
+
+
+- name: (logstash-debian) | pkill logstash process
+  shell: pkill -9 -u logstash
+  ignore_errors: yes
+  when: check_logstash_debian.rc == 0
+
+
+- name: (logstash-debian) | remove logstash
+  apt:
+    name: logstash
+    state: absent
+    purge: yes
+  when: check_logstash_debian.rc == 0
+
+
+- name: (logstash-debian) | wget logstash package
+  get_url:
+    url: https://download.elastic.co/logstash/logstash/packages/debian/logstash-2.4.1_all.deb
+    dest: /tmp/logstash-2.4.1_all.deb
+
+
+- name: (logstash-debian) | install logstash
+  shell: dpkg -i /tmp/logstash-2.4.1_all.deb
+
+
+- name: (logstash-debian) | remove temp package
+  file:
+    path: /tmp/logstash-2.4.1_all.deb
+    state: absent
+
+
+- name: (logstash-debian) | check systemctl
+  shell: /usr/bin/which systemctl
+  register: systemctl_exist
+  ignore_errors: yes
+
+
+- name: (logstash-debian) | enable logstash
+  shell: /bin/systemctl daemon-reload && /bin/systemctl enable logstash.service
+  when: systemctl_exist.rc == 0
+
+
+- name: (logstash-debian) | update-rc.d logstash
+  shell: /usr/sbin/update-rc.d logstash defaults
+  when: systemctl_exist.rc != 0
+
+
+- name: (logstash-debian) | replace config file
+  template:
+    src: logstash.conf.j2
+    dest: /etc/logstash/conf.d/logstash.conf
+  notify:
+    - restart logstash
+
+
+- name: (logstash-debian) | start logstash
+  service:
+    name: logstash
+    state: started
+

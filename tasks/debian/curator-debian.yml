@@ -1,0 +1,72 @@
+---
+
+- name: (curator-debian) | check pip
+  shell: which pip
+  register: pip_installed
+  ignore_errors: yes
+
+
+- name: (curator-debian) | install python-dev python-setuptools
+  apt:
+    name: "{{item}}"
+    state: present
+  with_items:
+    - python-dev
+    - python-setuptools
+  when: pip_installed.rc != 0
+
+
+- name: (curator-debian) | install pip
+  shell: easy_install pip
+  when: pip_installed.rc != 0
+
+
+- name: (curator-debian) | install curator virtualenv
+  pip:
+    name: virtualenv==15.1.0
+
+
+- name: (curator-debian) | remove curator venv directory
+  file:
+    path: "{{curator_venv_path}}"
+    state: absent
+
+
+- name: (curator-debian) | setup curator venv
+  shell: virtualenv --no-site-packages {{curator_venv_path}}
+
+
+- name: (curator-debian) | install curator packages in venv
+  pip:
+    name: "{{item}}"
+    virtualenv: "{{curator_venv_path}}"
+  with_items:
+    - "{{curator_packages}}"
+
+
+- name: (curator-debian) | copy curator config files
+  template:
+    src: "{{item}}.j2"
+    dest: "{{curator_venv_path}}/{{item}}"
+  with_items:
+    - curator.yml
+    - curator_action_delete.yml
+
+
+- name: (curator-debian) | copy curator cron.d file
+  template:
+    src: curator.cron.j2
+    dest: /etc/cron.d/curator
+
+
+- name: (curator-debian) | touch curator log file
+  file:
+    path: "{{curator_log_path}}"
+    state: touch
+
+
+- name: (curator-debian) | copy curator.rotate
+  template:
+    src: curator.rotate.j2
+    dest: /etc/logrotate.d/curator
+

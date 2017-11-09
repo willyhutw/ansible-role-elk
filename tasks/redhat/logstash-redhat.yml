@@ -1,0 +1,63 @@
+---
+
+- name: (logstash-redhat) | check logstash
+  shell: rpm -qa | grep logstash
+  register: check_logstash_redhat
+  ignore_errors: yes
+
+
+- name: (logstash-redhat) | stop logstash service
+  service:
+    name: logstash
+    state: stopped
+  when: check_logstash_redhat.rc == 0
+
+
+- name: (logstash-redhat) | pkill logstash process
+  shell: pkill -9 -u logstash
+  ignore_errors: yes
+  when: check_logstash_redhat.rc == 0
+
+
+- name: (logstash-redhat) | remove logstash
+  yum:
+    name: logstash
+    state: absent
+  when: check_logstash_redhat.rc == 0
+
+
+- name: (logstash-redhat) | wget logstash package
+  get_url:
+    url: https://download.elastic.co/logstash/logstash/packages/centos/logstash-2.4.1.noarch.rpm
+    dest: /tmp/logstash-2.4.1.noarch.rpm
+
+
+- name: (logstash-redhat) | install logstash
+  yum:
+    name: /tmp/logstash-2.4.1.noarch.rpm
+    state: present
+
+
+- name: (logstash-redhat) | remove temp package
+  file:
+    path: /tmp/logstash-2.4.1.noarch.rpm
+    state: absent
+
+
+- name: (logstash-redhat) | enable logstash
+  shell: /bin/systemctl daemon-reload && /bin/systemctl enable logstash.service
+
+
+- name: (logstash-redhat) | replace config file
+  template:
+    src: logstash.conf.j2
+    dest: /etc/logstash/conf.d/logstash.conf
+  notify:
+    - restart logstash
+
+
+- name: (logstash-redhat) | start logstash
+  service:
+    name: logstash
+    state: started
+

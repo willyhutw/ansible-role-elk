@@ -1,0 +1,14 @@
+input {
+  file {
+    type => "test"
+    path => [ "/tmp/test.log" ]
+  }
+}
+
+output {
+  elasticsearch {
+    hosts => [{% for ip in elasticsearch_address %}"{{ip}}:{{es_api_port}}"{% if not loop.last %},{% endif %}{% endfor %}]
+    template_overwrite => true
+  }
+}
+

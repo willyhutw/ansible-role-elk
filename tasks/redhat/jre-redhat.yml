@@ -1,0 +1,17 @@
+---
+
+- name: (jre-redhat) | check openjdk
+  shell: rpm -qa | grep openjdk
+  register: openjdk_installed
+  ignore_errors: yes
+
+
+- name: (jre-redhat) | install openjdk
+  yum:
+    name: "{{item}}"
+    state: present
+  with_items:
+    - java-1.8.0-openjdk.x86_64
+  when: openjdk_installed.rc != 0
+
+

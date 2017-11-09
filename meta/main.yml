@@ -1,0 +1,26 @@
+---
+
+galaxy_info:
+  author: willyhu
+  description: ELK for Ubuntu and CentOS
+  company: 
+  license: "license (BSD, MIT)"
+  min_ansible_version: 2.0
+  platforms:
+    - name: Ubuntu
+      versions:
+        - trusty
+        - xenial
+    - name: Debian
+      versions:
+        - etch
+        - jessie
+    - name: EL
+      versions:
+        - 6
+        - 7
+  galaxy_tags:
+    - elasticsearch
+    - logstash
+    - kibana
+dependencies: []

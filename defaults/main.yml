@@ -1,0 +1,23 @@
+---
+es_cluster_name: es_cluster
+number_of_shards: 1
+number_of_replicas: 0
+es_api_nic: all
+es_api_port: 9200
+es_transport_nic: eth0
+es_transport_port: 9300
+minimum_master_nodes: 1
+elasticsearch_address:
+  - 127.0.0.1
+  - 127.0.1.1
+curator_venv_path: /home/curator_env
+curator_log_path: /home/curator_env/curator.log
+curator_index_keep_day: 3
+curator_packages:
+  - click==6.7
+  - elasticsearch==2.4.1
+  - PyYAML==3.12
+  - voluptuous==0.9.3
+  - elasticsearch-curator==4.2.5
+kibana_listen_nic: all
+kibana_listen_port: 5601

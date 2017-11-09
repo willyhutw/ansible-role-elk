@@ -1,0 +1,42 @@
+---
+
+- name: (jre-debian) | check openjdk
+  shell: dpkg -l | grep openjdk
+  register: openjdk_installed
+  ignore_errors: yes
+
+
+- name: (jre-debian) | install openjdk
+  apt:
+    name: "{{item}}"
+    state: present
+  with_items:
+    - openjdk-7-jre
+  when:
+    - ansible_distribution != "Ubuntu"
+    - openjdk_installed.rc != 0
+
+
+- name: (jre-debian) | install openjdk
+  apt:
+    name: "{{item}}"
+    state: present
+  with_items:
+    - openjdk-7-jre
+  when:
+    - ansible_distribution == "Ubuntu"
+    - ansible_distribution_major_version == "14"
+    - openjdk_installed.rc != 0
+
+
+- name: (jre-debian) | install openjdk
+  apt:
+    name: "{{item}}"
+    state: present
+  with_items:
+    - openjdk-8-jre
+  when:
+    - ansible_distribution == "Ubuntu"
+    - ansible_distribution_major_version == "16"
+    - openjdk_installed.rc != 0
+

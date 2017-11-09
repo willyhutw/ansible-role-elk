@@ -1,0 +1,61 @@
+---
+
+- name: (kibana-debian) | check kibana
+  shell: dpkg -l | grep kibana
+  register: kibana_installed
+  ignore_errors: yes
+
+
+- name: (kibana-debian) | remove kibana
+  apt:
+    name: kibana
+    state: absent
+    purge: yes
+  when: kibana_installed.rc == 0
+
+
+- name: (kibana-debian) | wget kibana package
+  get_url:
+    url: https://download.elastic.co/kibana/kibana/kibana-4.6.3-amd64.deb
+    dest: /tmp/kibana-4.6.3-amd64.deb
+
+
+- name: (kibana-debian) | install kibana
+  shell: dpkg -i /tmp/kibana-4.6.3-amd64.deb
+
+
+- name: (kibana-debian) | remove kibana
+  file:
+    path: /tmp/kibana-4.6.3-amd64.deb
+    state: absent
+
+
+- name: (kibana-debian) | check systemctl
+  shell: /usr/bin/which systemctl
+  register: systemctl_exist
+  ignore_errors: yes
+
+
+- name: (kibana-debian) | enable kibana
+  shell: /bin/systemctl daemon-reload && /bin/systemctl enable kibana.service
+  when: systemctl_exist.rc == 0
+
+
+- name: (kibana-debian) | update-rc.d kibana
+  shell: /usr/sbin/update-rc.d kibana defaults
+  when: systemctl_exist.rc != 0
+
+
+- name: (kibana-debian) | replace config file
+  template:
+    src: kibana.yml.j2
+    dest: /opt/kibana/config/kibana.yml
+  notify:
+    - restart kibana
+
+
+- name: (kibana-debian) | start kibana
+  service:
+    name: kibana
+    state: started
+

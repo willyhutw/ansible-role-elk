@@ -1,0 +1,50 @@
+---
+
+- name: (kibana-redhat) | check kibana
+  shell: rpm -qa | grep kibana
+  register: kibana_installed
+  ignore_errors: yes
+
+
+- name: (kibana-redhat) | remove kibana
+  yum:
+    name: kibana
+    state: absent
+  when: kibana_installed.rc == 0
+
+
+- name: (kibana-redhat) | wget kibana package
+  get_url:
+    url: https://download.elastic.co/kibana/kibana/kibana-4.6.4-x86_64.rpm
+    dest: /tmp/kibana-4.6.4-x86_64.rpm
+
+
+- name: (kibana-redhat) | install kibana
+  yum:
+    name: /tmp/kibana-4.6.4-x86_64.rpm
+    state: present
+
+
+- name: (kibana-redhat) | remove kibana
+  file:
+    path: /tmp/kibana-4.6.4-x86_64.rpm
+    state: absent
+
+
+- name: (kibana-redhat) | enable kibana
+  shell: /bin/systemctl daemon-reload && /bin/systemctl enable kibana.service
+
+
+- name: (kibana-redhat) | replace config file
+  template:
+    src: kibana.yml.j2
+    dest: /opt/kibana/config/kibana.yml
+  notify:
+    - restart kibana
+
+
+- name: (kibana-redhat) | start kibana
+  service:
+    name: kibana
+    state: started
+

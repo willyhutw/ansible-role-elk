@@ -1,0 +1,72 @@
+---
+
+- name: (curator-redhat) | check pip
+  shell: which pip
+  register: pip_installed
+  ignore_errors: yes
+
+
+- name: (curator-redhat) | install python-devel python-setuptools
+  yum:
+    name: "{{item}}"
+    state: present
+  with_items:
+    - python-devel
+    - python-setuptools
+  when: pip_installed.rc != 0
+
+
+- name: (curator-redhat) | install pip
+  shell: easy_install pip
+  when: pip_installed.rc != 0
+
+
+- name: (curator-redhat) | install curator virtualenv
+  pip:
+    name: virtualenv==15.1.0
+
+
+- name: (curator-redhat) | remove curator venv directory
+  file:
+    path: "{{curator_venv_path}}"
+    state: absent
+
+
+- name: (curator-redhat) | setup curator venv
+  shell: virtualenv --no-site-packages {{curator_venv_path}}
+
+
+- name: (curator-redhat) | install curator packages in venv
+  pip:
+    name: "{{item}}"
+    virtualenv: "{{curator_venv_path}}"
+  with_items:
+    - "{{curator_packages}}"
+
+
+- name: (curator-redhat) | copy curator config files
+  template:
+    src: "{{item}}.j2"
+    dest: "{{curator_venv_path}}/{{item}}"
+  with_items:
+    - curator.yml
+    - curator_action_delete.yml
+
+
+- name: (curator-redhat) | copy curator cron.d file
+  template:
+    src: curator.cron.j2
+    dest: /etc/cron.d/curator
+
+
+- name: (curator-redhat) | touch curator log file
+  file:
+    path: "{{curator_log_path}}"
+    state: touch
+
+
+- name: (curator-redhat) | copy curator.rotate
+  template:
+    src: curator.rotate.j2
+    dest: /etc/logrotate.d/curator
+

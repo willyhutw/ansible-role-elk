@@ -1,0 +1,67 @@
+---
+
+- name: (elasticsearch-debian) | check elasticsearch
+  shell: dpkg -l | grep elasticsearch
+  register: elasticsearch_installed
+  ignore_errors: yes
+
+
+- name: (elasticsearch-debian) | remove elasticsearch
+  apt:
+    name: elasticsearch
+    state: absent
+    purge: yes
+  when: elasticsearch_installed.rc == 0
+
+
+- name: (elasticsearch-debian) | wget elasticsearch package
+  get_url:
+    url: https://download.elastic.co/elasticsearch/release/org/elasticsearch/distribution/deb/elasticsearch/2.4.4/elasticsearch-2.4.4.deb
+    dest: /tmp/elasticsearch-2.4.4.deb
+
+
+- name: (elasticsearch-debian) | install elasticsearch
+  shell: dpkg -i /tmp/elasticsearch-2.4.4.deb
+
+
+- name: (elasticsearch-debian) | remove temp package
+  file:
+    path: /tmp/elasticsearch-2.4.4.deb
+    state: absent
+
+
+- name: (elasticsearch-debian) | check systemctl
+  shell: /usr/bin/which systemctl
+  register: systemctl_exist
+  ignore_errors: yes
+
+
+- name: (elasticsearch-debian) | enable elasticsearch
+  shell: /bin/systemctl daemon-reload && /bin/systemctl enable elasticsearch.service
+  when: systemctl_exist.rc == 0
+
+
+- name: (elasticsearch-debian) | update-rc.d elasticsearch
+  shell: /usr/sbin/update-rc.d elasticsearch defaults
+  when: systemctl_exist.rc != 0
+
+
+- name: (elasticsearch-debian) | change mode and owner for directories
+  shell: chown -R {{item}}:{{item}} /var/lib/{{item}}
+  with_items:
+    - elasticsearch
+
+
+- name: (elasticsearch-debian) | replace elasticsearch config file
+  template:
+    src: elasticsearch.yml.j2
+    dest: /etc/elasticsearch/elasticsearch.yml
+  notify:
+    - restart elasticsearch
+
+
+- name: (elasticsearch-debian) | start elasticsearch
+  service:
+    name: elasticsearch
+    state: started
+

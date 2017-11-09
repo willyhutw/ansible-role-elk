@@ -1,0 +1,15 @@
+---
+
+- include: debian/jre-debian.yml
+  tags: [elasticsearch, logstash]
+- include: debian/elasticsearch-debian.yml
+  tags: elasticsearch
+- include: debian/kopf-debian.yml
+  tags: elasticsearch
+- include: debian/curator-debian.yml
+  tags: elasticsearch
+- include: debian/logstash-debian.yml
+  tags: logstash
+- include: debian/kibana-debian.yml
+  tags: kibana
+

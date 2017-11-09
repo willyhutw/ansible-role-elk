@@ -1,0 +1,56 @@
+---
+
+- name: (elasticsearch-redhat) | check elasticsearch
+  shell: rpm -qa | grep elasticsearch
+  register: elasticsearch_installed
+  ignore_errors: yes
+
+
+- name: (elasticsearch-redhat) | remove elasticsearch
+  yum:
+    name: elasticsearch
+    state: absent
+  when: elasticsearch_installed.rc == 0
+
+
+- name: (elasticsearch-redhat) | wget elasticsearch package
+  get_url:
+    url: https://download.elastic.co/elasticsearch/release/org/elasticsearch/distribution/rpm/elasticsearch/2.4.4/elasticsearch-2.4.4.rpm
+    dest: /tmp/elasticsearch-2.4.4.rpm
+
+
+- name: (elasticsearch-redhat) | install elasticsearch
+  yum:
+    name: /tmp/elasticsearch-2.4.4.rpm
+    state: present
+
+
+- name: (elasticsearch-redhat) | remove temp package
+  file:
+    path: /tmp/elasticsearch-2.4.4.rpm
+    state: absent
+
+
+- name: (elasticsearch-redhat) | enable elasticsearch
+  shell: /bin/systemctl daemon-reload && /bin/systemctl enable elasticsearch.service
+
+
+- name: (elasticsearch-redhat) | change mode and owner for directories
+  shell: chown -R {{item}}:{{item}} /var/lib/{{item}}
+  with_items:
+    - elasticsearch
+
+
+- name: (elasticsearch-debian) | replace elasticsearch config file
+  template:
+    src: elasticsearch.yml.j2
+    dest: /etc/elasticsearch/elasticsearch.yml
+  notify:
+    - restart elasticsearch
+
+
+- name: (elasticsearch-debian) | start elasticsearch
+  service:
+    name: elasticsearch
+    state: started
+

@@ -1,0 +1,15 @@
+---
+
+- include: redhat/jre-redhat.yml
+  tags: [elasticsearch, logstash]
+- include: redhat/elasticsearch-redhat.yml
+  tags: elasticsearch
+- include: redhat/kopf-redhat.yml
+  tags: elasticsearch
+- include: redhat/curator-redhat.yml
+  tags: elasticsearch
+- include: redhat/logstash-redhat.yml
+  tags: logstash
+- include: redhat/kibana-redhat.yml
+  tags: kibana
+
